@@ -1,63 +1,65 @@
-const Tour = require("../models/tourModel");
+const Tour = require('../models/tourModel');
 
-// GET /tours
-const getAllTours = (req, res) => {
-  const tours = Tour.getAll();
-  res.json(tours);
-};
-
-// POST /tours
-const createTour = (req, res) => {
-  const newTour = Tour.addOne({ ...req.body }); // Spread the req.body object
-
-  if (newTour) {
-    res.status(201).json(newTour); // 201 Created
-  } else {
-    // Handle error (e.g., failed to create tour)
-    res.status(400).json({ message: "Invalid tour data. Ensure all fields are provided, including 'season' and 'specialOffer'." });
-  }
-};
- 
-// GET /tours/:tourId
-const getTourById = (req, res) => {
-  const tourId = req.params.tourId;
-  const tour = Tour.findById(tourId);
-  if (tour) {
-    res.json(tour);
-  } else {
-    res.status(404).json({ message: "Tour not found" });
+// GET /api/tours
+const getAllTours = async (req, res) => {
+  try {
+    const tours = await Tour.find({});
+    res.status(200).json(tours);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-// PUT /tours/:tourId
-const updateTour = (req, res) => {
-  const tourId = req.params.tourId;
-  if (isNaN(tourId)) {
-    return res.status(400).json({ message: "Invalid tour ID" });
-  }
-  const updatedTour = Tour.updateOneById(tourId, { ...req.body }); // Spread the req.body object
-
-  if (updatedTour) {
-    res.json(updatedTour);
-  } else {
-    // Handle update failure (e.g., tour not found)
-    res.status(404).json({ message: "Tour not found" });
+// GET /api/tours/:tourId
+const getTourById = async (req, res) => {
+  try {
+    const tour = await Tour.findById(req.params.tourId);
+    if (!tour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+    res.status(200).json(tour);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-// DELETE /tours/:tourId
-const deleteTour = (req, res) => {
-  const tourId = req.params.tourId;
-  if (isNaN(tourId)) {
-    return res.status(400).json({ message: "Invalid tour ID" });
+// POST /api/tours
+const createTour = async (req, res) => {
+  try {
+    const newTour = await Tour.create(req.body);
+    res.status(201).json(newTour);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
-  const isDeleted = Tour.deleteOneById(tourId);
+};
 
-  if (isDeleted) {
-    res.status(204).send(); // 204 No Content
-  } else {
-    // Handle deletion failure (e.g., tour not found)
-    res.status(404).json({ message: "Tour not found" });
+// PUT /api/tours/:tourId
+const updateTour = async (req, res) => {
+  try {
+    const updatedTour = await Tour.findByIdAndUpdate(
+      req.params.tourId,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedTour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+    res.status(200).json(updatedTour);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// DELETE /api/tours/:tourId
+const deleteTour = async (req, res) => {
+  try {
+    const deletedTour = await Tour.findByIdAndDelete(req.params.tourId);
+    if (!deletedTour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+    res.status(200).json({ message: 'Tour deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -68,4 +70,3 @@ module.exports = {
   updateTour,
   deleteTour,
 };
-
